@@ -55,6 +55,7 @@ class Erebus(Supervisor):
     ROBOT_NAME = "Erebus_Bot"
     TIME_STEP = 16
     DEFAULT_MAX_MULT = 1.0
+    VICTIM_TIME_BONUS = 30
 
     def __init__(self):
         super().__init__()
@@ -444,6 +445,24 @@ class Erebus(Supervisor):
         except:
             self.rws.send("version", f"{self.version}")
 
+    def _add_time_bonus(self, seconds: int) -> None:
+        """Increase the remaining simulation time when a bonus is awarded.
+
+        Args:
+            seconds (int): Seconds to add to the match timers.
+        """
+        self.max_time += seconds
+        self._max_real_world_time = int(
+            max(self.max_time + 60, self.max_time * 1.25)
+        )
+        self.robot_obj.history.enqueue(
+            f"Time bonus applied: +{seconds}s (max time: {self.max_time}s)"
+        )
+
+        # Force a robot window update so the extended timers are visible.
+        self._last_sent_time = -1
+        self._last_sent_real_time = -1
+
     def _detect_victim(self, robot_message: list[Any]) -> None:
         """Runs victim detection to give points based on the victim's estimated
         type and location
@@ -532,6 +551,9 @@ class Erebus(Supervisor):
                     correct_type_bonus,
                     multiplier=self.tile_manager.ROOM_MULT[room_num]
                 )
+
+                if name == 'Victim':
+                    self._add_time_bonus(Erebus.VICTIM_TIME_BONUS)
 
             self.robot_obj.increase_score(
                 f"Successful {name} Identification",
