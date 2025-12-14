@@ -595,21 +595,34 @@ class Erebus(Supervisor):
         """
         Console.log_debug(
             f"Robot Stopped for {self.robot_obj.time_stopped()}s")
-        
+
         # Process exit commands
         if robot_message[0] == 'E':
             # TODO check this is inline with rules
             # Check robot position is on starting tile
             if self.tile_manager.start_tile.check_position(self.robot_obj.position):
-                if self.robot_obj.victim_identified:
-                    self.robot_obj.increase_score("Exit Bonus",
-                                                  self.robot_obj.get_score() * 0.1)
+                if self.robot_obj.checkpoint_found:
+                    time_remaining: float = max(
+                        0,
+                        self.max_time - self.time_elapsed,
+                    )
+                    time_bonus: float = time_remaining * 2
+
+                    self.robot_obj.increase_score(
+                        "Exit Time Bonus",
+                        time_bonus,
+                    )
+
+                    self.robot_obj.increase_score(
+                        "Exit Bonus",
+                        self.robot_obj.get_score() * 0.1,
+                    )
                 else:
                     self.robot_obj.history.enqueue("No Exit Bonus")
             # Update score and history
             self._add_map_multiplier()
             self._robot_quit(False)
-            
+
             self.rws.send("ended")
             self._game_state = GameState.MATCH_FINISHED
             self._last_frame = True
