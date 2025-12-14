@@ -1,6 +1,9 @@
 import RobotWindow from 'https://cyberbotics.com/wwi/R2023a/RobotWindow.js';
 
 let historyHtml = "";
+let lopRemaining = 0;
+let lopButtonAllowed = false;
+window.maxBrowserLop = 4;
 
 function receive (message){
 	//Receive message from the python supervisor
@@ -92,11 +95,28 @@ function receive (message){
 			case "dockerSuccess":
 				preRun();
 				break;
-			case "currentWorld":
-				enableTestButton(parts[1]);
-				break;
-		}
-	}
+                        case "currentWorld":
+                                enableTestButton(parts[1]);
+                                break;
+                        case "lopRemaining":
+                                updateLopRemaining(parts[1]);
+                                break;
+                }
+        }
+}
+
+function updateLopRemaining(count){
+        lopRemaining = Number(count);
+
+        const lopLabel = document.getElementById("lopRemaining");
+        if (lopLabel){
+                lopLabel.innerHTML = `Remaining lack of progress (browser): ${lopRemaining}/${window.maxBrowserLop || 4}`;
+        }
+
+        const lopButton = document.getElementById("lopButton");
+        if (lopButton){
+                lopButton.disabled = !(lopButtonAllowed && lopRemaining > 0);
+        }
 }
 
 function updateWorld(worlds_str){
@@ -367,12 +387,18 @@ window.openLoadController = function(id){
 }
 
 function setEnableButton(name, state){
-	//Set the disabled state of a button (state is if it is enabled as a boolean)
-	document.getElementById(name).disabled = !state;
-	if(name == "giveupB"){
-		if(state) document.getElementById(name).className = "btn-giveup"
-		else document.getElementById(name).className = "btn-giveupD"
-	}
+        //Set the disabled state of a button (state is if it is enabled as a boolean)
+        if(name == "lopButton"){
+                lopButtonAllowed = state;
+                document.getElementById(name).disabled = !(lopButtonAllowed && lopRemaining > 0);
+                return;
+        }
+
+        document.getElementById(name).disabled = !state;
+        if(name == "giveupB"){
+                if(state) document.getElementById(name).className = "btn-giveup"
+                else document.getElementById(name).className = "btn-giveupD"
+        }
 }
 
 //Set the onload command for the window
@@ -502,7 +528,8 @@ window.openJsonFile = function(){
 }
 
 window.relocate = function(id){
-	window.robotWindow.send("relocate,"+id.toString());
+        if (lopRemaining <= 0) return;
+        window.robotWindow.send("relocate,"+id.toString());
 }
 
 window.quit = function(id){
