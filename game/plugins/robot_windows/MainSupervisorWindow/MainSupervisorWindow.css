@@ -554,3 +554,10 @@ hr {
 #dev-tests {
   display: none;
 }
+
+.lop-remaining {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 6px;
+  color: #2c3e50;
+}

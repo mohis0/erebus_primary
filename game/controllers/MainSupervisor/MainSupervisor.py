@@ -56,6 +56,8 @@ class Erebus(Supervisor):
     TIME_STEP = 16
     DEFAULT_MAX_MULT = 1.0
     VICTIM_TIME_BONUS = 30
+    BROWSER_LOP_LIMIT = 4
+    BROWSER_LOP_TIME_DECREMENT = 15
 
     def __init__(self):
         super().__init__()
@@ -102,6 +104,8 @@ class Erebus(Supervisor):
         # Maximum time for a match
         self.max_time: int = 8 * 60
 
+        self._browser_lop_remaining: int = self.BROWSER_LOP_LIMIT
+
         self._last_sent_score: float = 0.0
         self._last_sent_time: float = 0.0
         self._last_sent_real_time: float = 0.0
@@ -138,6 +142,8 @@ class Erebus(Supervisor):
         self.robot_obj: Robot = Robot(self)
         self.robot_obj.update_config(self.config)
         self.robot_obj.controller.reset_file()
+
+        self._send_browser_lop_remaining()
         self.robot_obj.reset_proto()
 
         # Calculate the solution arrays for the map layout
@@ -190,6 +196,8 @@ class Erebus(Supervisor):
         # If recording
         if self.config.recording:
             Recorder.start_recording(self)
+
+        self._reset_browser_lop_remaining()
 
         # Get the robot node by DEF name
         robot_node: Optional[Node] = self.getFromDef("ROBOT0")
@@ -255,6 +263,12 @@ class Erebus(Supervisor):
         
         # Update history with event
         self.robot_obj.increase_score(f"Lack of Progress {suffix}", -5)
+
+        if manual:
+            self.time_elapsed = min(
+                self.time_elapsed + self.BROWSER_LOP_TIME_DECREMENT,
+                self.max_time,
+            )
 
         # Update the camera position since the robot has now suddenly moved
         if self.config.automatic_camera and self._camera.wb_viewpoint_node:
@@ -735,7 +749,16 @@ class Erebus(Supervisor):
                 data = message.split(",", 1)
                 if len(data) > 1:
                     if int(data[1]) == 0:
-                        self.relocate_robot(manual=True)
+                        if self._browser_lop_remaining > 0:
+                            self._browser_lop_remaining -= 1
+                            self._send_browser_lop_remaining()
+                            self.relocate_robot(manual=True)
+                            self.robot_obj.reset_time_stopped()
+                        else:
+                            self.robot_obj.history.enqueue(
+                                "No browser lack of progress relocations remaining"
+                            )
+                            self._send_browser_lop_remaining()
 
             # Quite the robot from the simulation
             if command == 'quit':
@@ -845,6 +868,17 @@ class Erebus(Supervisor):
             self.rws.update_history("remoteEnabled")
         else:
             self.rws.update_history("remoteDisabled")
+
+    def _send_browser_lop_remaining(self) -> None:
+        """Sends the remaining browser lack of progress relocations to the UI."""
+
+        self.rws.send("lopRemaining", f"{self._browser_lop_remaining}")
+
+    def _reset_browser_lop_remaining(self) -> None:
+        """Resets the remaining browser lack of progress relocations to max."""
+
+        self._browser_lop_remaining = self.BROWSER_LOP_LIMIT
+        self._send_browser_lop_remaining()
 
     def update(self) -> None:
         """Main Erebus update loop, used to process anything needed during the
