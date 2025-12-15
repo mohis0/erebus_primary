@@ -143,6 +143,10 @@ class Robot(ErebusObject):
         # victim has been identified
         self.victim_identified: bool = False
 
+        # Whether at least one checkpoint (excluding the start tile) has been
+        # reached.
+        self.checkpoint_found: bool = False
+
         # TODO these should be tuples... something to do when changing Tile code
         self.last_visited_checkpoint_pos: Optional[
             tuple[float,float, float]] = None
@@ -447,6 +451,9 @@ class Robot(ErebusObject):
             checkpoint (Checkpoint): Checkpoint to check
         """
         self.last_visited_checkpoint_pos = checkpoint.center
+
+        # Mark that a checkpoint has been reached
+        self.checkpoint_found = True
 
         # Dont update if checkpoint is already visited
         if not any([c == checkpoint.center for c in self.visited_checkpoints]):
