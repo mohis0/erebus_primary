@@ -55,9 +55,11 @@ class Erebus(Supervisor):
     ROBOT_NAME = "Erebus_Bot"
     TIME_STEP = 16
     DEFAULT_MAX_MULT = 1.0
-    VICTIM_TIME_BONUS = 30
-    BROWSER_LOP_LIMIT = 4
-    BROWSER_LOP_TIME_DECREMENT = 15
+    VICTIM_TIME_BONUSES: dict[str, int] = {
+        'H': 45,
+        'S': 30,
+        'U': 15,
+    }
 
     def __init__(self):
         super().__init__()
@@ -459,18 +461,19 @@ class Erebus(Supervisor):
         except:
             self.rws.send("version", f"{self.version}")
 
-    def _add_time_bonus(self, seconds: int) -> None:
+    def _add_time_bonus(self, seconds: int, reason: str = "Time bonus applied") -> None:
         """Increase the remaining simulation time when a bonus is awarded.
 
         Args:
             seconds (int): Seconds to add to the match timers.
+            reason (str, optional): Description for the history log.
         """
         self.max_time += seconds
         self._max_real_world_time = int(
             max(self.max_time + 60, self.max_time * 1.25)
         )
         self.robot_obj.history.enqueue(
-            f"Time bonus applied: +{seconds}s (max time: {self.max_time}s)"
+            f"{reason}: +{seconds}s (max time: {self.max_time}s)"
         )
 
         # Force a robot window update so the extended timers are visible.
@@ -498,7 +501,6 @@ class Erebus(Supervisor):
             iterator = self.victim_manager.hazards
             name = 'Hazard'
             correct_type_bonus = 0
-            hazard_detection = True
 
         # Get nearby victim/hazards that are within range (as per the rules)
         nearby_map_issues: Sequence[VictimObject] = [
@@ -561,22 +563,35 @@ class Erebus(Supervisor):
                               f"{nearby_issue.simple_victim_type.lower()}")
 
             # Update score and history
-            if not hazard_detection and (
-                    est_vic_type.lower() == nearby_issue.simple_victim_type.lower()):
-                self.robot_obj.increase_score(
-                    f"Successful {name} Type Correct Bonus",
-                    correct_type_bonus,
-                    multiplier=self.tile_manager.ROOM_MULT[room_num]
-                )
-
+            if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
                 if name == 'Victim':
-                    self._add_time_bonus(Erebus.VICTIM_TIME_BONUS)
+                    time_bonus = Erebus.VICTIM_TIME_BONUSES.get(
+                        nearby_issue.simple_victim_type.upper(), 0
+                    )
+                    self.robot_obj.increase_score(
+                        f"Successful {name} Type Correct Bonus",
+                        correct_type_bonus,
+                        multiplier=self.tile_manager.ROOM_MULT[room_num]
+                    )
+                    if time_bonus > 0:
+                        self._add_time_bonus(
+                            time_bonus,
+                            f"Victim {nearby_issue.simple_victim_type} time bonus"
+                        )
+                else:
+                    self.robot_obj.history.enqueue(
+                        "Hazard type confirmed (no points awarded)"
+                    )
 
-            if not hazard_detection:
+            if name == 'Victim':
                 self.robot_obj.increase_score(
                     f"Successful {name} Identification",
                     nearby_issue.score_worth,
                     multiplier=self.tile_manager.ROOM_MULT[room_num]
+                )
+            else:
+                self.robot_obj.history.enqueue(
+                    "Hazard identification recorded (no points awarded)"
                 )
 
             self.robot_obj.victim_identified = True
