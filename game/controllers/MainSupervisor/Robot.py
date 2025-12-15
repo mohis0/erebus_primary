@@ -143,6 +143,10 @@ class Robot(ErebusObject):
         # victim has been identified
         self.victim_identified: bool = False
 
+        # Whether at least one checkpoint (excluding the start tile) has been
+        # reached.
+        self.checkpoint_found: bool = False
+
         # TODO these should be tuples... something to do when changing Tile code
         self.last_visited_checkpoint_pos: Optional[
             tuple[float,float, float]] = None
@@ -448,6 +452,9 @@ class Robot(ErebusObject):
         """
         self.last_visited_checkpoint_pos = checkpoint.center
 
+        # Mark that a checkpoint has been reached
+        self.checkpoint_found = True
+
         # Dont update if checkpoint is already visited
         if not any([c == checkpoint.center for c in self.visited_checkpoints]):
             # Add the checkpoint to the list of visited checkpoints
@@ -461,8 +468,9 @@ class Robot(ErebusObject):
                 .getMFNode(grid) # type: ignore
                 .getField("room").getSFInt32() - 1
             )
-            self.increase_score("Found checkpoint", 10, 
-                                multiplier=TileManager.ROOM_MULT[room_num])
+
+            self.increase_score("Found checkpoint", 250)
+
 
     def update_in_swamp(self, in_swamp: bool, default_multiplier: float) -> None:
         """Updates the game's timer countdown multiplier when in a swamp.
