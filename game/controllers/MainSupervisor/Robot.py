@@ -468,7 +468,7 @@ class Robot(ErebusObject):
                 .getMFNode(grid) # type: ignore
                 .getField("room").getSFInt32() - 1
             )
-            self.increase_score("Found checkpoint", 300,
+            self.increase_score("Found checkpoint", 250,
                                 multiplier=TileManager.ROOM_MULT[room_num])
 
     def update_in_swamp(self, in_swamp: bool, default_multiplier: float) -> None:
