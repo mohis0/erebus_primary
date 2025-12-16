@@ -55,6 +55,8 @@ class Erebus(Supervisor):
     ROBOT_NAME = "Erebus_Bot"
     TIME_STEP = 16
     DEFAULT_MAX_MULT = 1.0
+    BROWSER_LOP_TIME_DECREMENT = 15
+    BROWSER_LOP_LIMIT = 4
     VICTIM_TIME_BONUSES: dict[str, int] = {
         'H': 45,
         'S': 30,
