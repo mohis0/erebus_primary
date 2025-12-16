@@ -7,6 +7,7 @@ PROTO HazardMap [
     field SFString   name              "Hazard Map"
     field SFString   type              "F"
     field SFInt32    scoreWorth        10
+    field SFBool     displayPlacard    TRUE
 ]
 {
     %{
@@ -43,8 +44,9 @@ PROTO HazardMap [
         translation IS translation
         rotation IS rotation
         children [
+            %{ if fields.displayPlacard.value then }%
             Solid {
-               
+
                 translation 0 0 0
                 rotation 0 1 0 3.14159
                 children [
@@ -62,6 +64,7 @@ PROTO HazardMap [
                 ]
                 name IS name
             }
+            %{ end }%
         ]
     }
 }
