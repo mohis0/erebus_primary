@@ -3015,6 +3015,7 @@
             rotation 0 1 0 1.57
             name "Hazard0"
             type "O"
+            displayPlacard FALSE
             scoreWorth 30
         }
         
@@ -3023,6 +3024,7 @@
             rotation 0 1 0 -0.785
             name "Hazard1"
             type "F"
+            displayPlacard FALSE
             scoreWorth 10
         }
         
@@ -3031,6 +3033,7 @@
             rotation 0 1 0 0
             name "Hazard2"
             type "C"
+            displayPlacard FALSE
             scoreWorth 30
         }
         
@@ -3039,6 +3042,7 @@
             rotation 0 1 0 0.785398
             name "Hazard3"
             type "P"
+            displayPlacard FALSE
             scoreWorth 30
         }
         

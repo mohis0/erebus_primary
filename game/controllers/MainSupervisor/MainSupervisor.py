@@ -264,7 +264,7 @@ class Erebus(Supervisor):
         suffix = "(via robot)"
         if manual:
             suffix = "(via UI)"
-        
+
         # Update history with event
         self.robot_obj.increase_score(f"Lack of Progress {suffix}", -5)
 
@@ -272,6 +272,9 @@ class Erebus(Supervisor):
             self.time_elapsed = min(
                 self.time_elapsed + self.BROWSER_LOP_TIME_DECREMENT,
                 self.max_time,
+            )
+            self.robot_obj.history.enqueue(
+                "Time decreased by 15s due to lack of progress (via UI)"
             )
 
         # Update the camera position since the robot has now suddenly moved
@@ -494,7 +497,7 @@ class Erebus(Supervisor):
         est_vic_type = robot_message[1]
 
         iterator: Sequence[VictimObject] = self.victim_manager.victims
-        name: str = 'Victim'
+        name: str = 'Battery'
         correct_type_bonus: int = 10
         misidentification: bool = True
         hazard_detection: bool = False
@@ -566,28 +569,28 @@ class Erebus(Supervisor):
 
             # Update score and history
             if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
-                if name == 'Victim':
+                if name == 'Battery':
                     time_bonus = Erebus.VICTIM_TIME_BONUSES.get(
                         nearby_issue.simple_victim_type.upper(), 0
                     )
                     self.robot_obj.increase_score(
-                        f"Successful {name} Type Correct Bonus",
+                        f"Battery {nearby_issue.simple_victim_type} type correct bonus",
                         correct_type_bonus,
                         multiplier=self.tile_manager.ROOM_MULT[room_num]
                     )
                     if time_bonus > 0:
                         self._add_time_bonus(
                             time_bonus,
-                            f"Victim {nearby_issue.simple_victim_type} time bonus"
+                            f"Battery {nearby_issue.simple_victim_type} time bonus"
                         )
                 else:
                     self.robot_obj.history.enqueue(
                         "Hazard type confirmed (no points awarded)"
                     )
 
-            if name == 'Victim':
+            if name == 'Battery':
                 self.robot_obj.increase_score(
-                    f"Successful {name} Identification",
+                    f"Battery {nearby_issue.simple_victim_type} detected successfully",
                     nearby_issue.score_worth,
                     multiplier=self.tile_manager.ROOM_MULT[room_num]
                 )
@@ -663,10 +666,6 @@ class Erebus(Supervisor):
 
                 map_score: float = MapScorer.calculateScore(
                     self._map_sol, self.robot_obj.map_data
-                )
-
-                self.robot_obj.history.enqueue(
-                    f"Map Correctness {str(round(map_score * 100,2))}%"
                 )
 
                 # Add percent

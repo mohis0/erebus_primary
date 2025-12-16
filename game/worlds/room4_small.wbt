@@ -567,23 +567,27 @@ DEF HAZARDGROUP Group {
       translation -0.2944 0 -0.175
       rotation 0 1 0 -1.57
       name "Hazard0"
+      displayPlacard FALSE
     }
     HazardMap {
       translation -0.054400000000000004 0 -0.078
       rotation 0 1 0 -1.57
       name "Hazard1"
       type "O"
+      displayPlacard FALSE
     }
     HazardMap {
       translation 0.1744 0 -0.03
       rotation 0 1 0 1.57
       name "Hazard2"
       type "P"
+      displayPlacard FALSE
     }
     HazardMap {
       translation 0.15 0 0.0544
       name "Hazard3"
       type "C"
+      displayPlacard FALSE
     }
     HazardMap {
       translation -0.237 0 0.181
@@ -591,6 +595,7 @@ DEF HAZARDGROUP Group {
       name "Hazard4"
       type "O"
       scoreWorth 30
+      displayPlacard FALSE
     }
   ]
 }

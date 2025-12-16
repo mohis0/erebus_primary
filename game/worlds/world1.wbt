@@ -1952,6 +1952,7 @@
             rotation 0 1 0 -1.57
             name "Hazard0"
             type "F"
+            displayPlacard FALSE
             scoreWorth 10
         }
         
@@ -1960,6 +1961,7 @@
             rotation 0 1 0 -1.57
             name "Hazard1"
             type "P"
+            displayPlacard FALSE
             scoreWorth 10
         }
         
