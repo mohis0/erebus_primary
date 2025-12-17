@@ -62,6 +62,8 @@ class Erebus(Supervisor):
         'S': 30,
         'U': 15,
     }
+    BATTERY_CORRECT_SCORE: int = 25
+    BATTERY_MISIDENTIFICATION_PENALTY: int = -5
 
     def __init__(self):
         super().__init__()
@@ -498,14 +500,13 @@ class Erebus(Supervisor):
 
         iterator: Sequence[VictimObject] = self.victim_manager.victims
         name: str = 'Battery'
-        correct_type_bonus: int = 10
+        is_battery_detection: bool = True
         misidentification: bool = True
-        hazard_detection: bool = False
 
         if est_vic_type.lower() in list(map(to_lower, HazardMap.HAZARD_TYPES)):
             iterator = self.victim_manager.hazards
             name = 'Hazard'
-            correct_type_bonus = 0
+            is_battery_detection = False
 
         # Get nearby victim/hazards that are within range (as per the rules)
         nearby_map_issues: Sequence[VictimObject] = [
@@ -568,31 +569,34 @@ class Erebus(Supervisor):
                               f"{nearby_issue.simple_victim_type.lower()}")
 
             # Update score and history
-            if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
-                if name == 'Battery':
-                    time_bonus = Erebus.VICTIM_TIME_BONUSES.get(
-                        nearby_issue.simple_victim_type.upper(), 0
-                    )
+            if is_battery_detection:
+                battery_type: str = nearby_issue.simple_victim_type.upper()
+                if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
                     self.robot_obj.increase_score(
-                        f"Battery {nearby_issue.simple_victim_type} type correct bonus",
-                        correct_type_bonus,
-                        multiplier=self.tile_manager.ROOM_MULT[room_num]
+                        f"Battery {battery_type} detected correctly",
+                        Erebus.BATTERY_CORRECT_SCORE,
+                        multiplier=1,
                     )
+                    time_bonus = Erebus.VICTIM_TIME_BONUSES.get(battery_type, 0)
                     if time_bonus > 0:
                         self._add_time_bonus(
                             time_bonus,
-                            f"Battery {nearby_issue.simple_victim_type} time bonus"
+                            f"Battery {battery_type} time bonus"
                         )
                 else:
-                    self.robot_obj.history.enqueue(
-                        "Hazard type confirmed (no points awarded)"
+                    self.robot_obj.increase_score(
+                        "Battery type misidentified",
+                        Erebus.BATTERY_MISIDENTIFICATION_PENALTY,
+                        multiplier=1,
                     )
 
-            if name == 'Battery':
-                self.robot_obj.increase_score(
-                    f"Battery {nearby_issue.simple_victim_type} detected successfully",
-                    nearby_issue.score_worth,
-                    multiplier=self.tile_manager.ROOM_MULT[room_num]
+                self.robot_obj.victim_identified = True
+                nearby_issue.identified = True
+                return
+
+            if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
+                self.robot_obj.history.enqueue(
+                    "Hazard type confirmed (no points awarded)"
                 )
             else:
                 self.robot_obj.history.enqueue(
@@ -603,8 +607,12 @@ class Erebus(Supervisor):
             nearby_issue.identified = True
 
         if misidentification:
-            self.robot_obj.increase_score(f"Misidentification of {name}",
-                                          -5)
+            penalty: int = Erebus.BATTERY_MISIDENTIFICATION_PENALTY if is_battery_detection else -5
+            self.robot_obj.increase_score(
+                f"Misidentification of {name}",
+                penalty,
+                multiplier=1,
+            )
 
     def _process_message(self, robot_message: list[Any]) -> None:
         """Processes the messages recieved from the competitor's robot's emitter
