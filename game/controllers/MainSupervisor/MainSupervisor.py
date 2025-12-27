@@ -497,6 +497,8 @@ class Erebus(Supervisor):
         # Get estimated position and type values
         est_vic_pos = robot_message[0]
         est_vic_type = robot_message[1]
+        if est_vic_pos is None:
+            est_vic_pos = self.robot_obj.position
 
         iterator: Sequence[VictimObject] = self.victim_manager.victims
         name: str = 'Battery'
