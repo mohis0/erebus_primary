@@ -366,6 +366,15 @@ class Robot(ErebusObject):
 
                 # Store data recieved
                 self.message = [estimated_victim_position, victimType]
+            # Victim identification without an estimated position.
+            # Format: b'V' + victim type character.
+            elif data_len == 2:
+                tup: tuple[Any, ...] = struct.unpack('c c', received_data)
+                if tup[0].decode("utf-8") == "V":
+                    victim_type = tup[1].decode("utf-8")
+                    self.message = [None, victim_type]
+                else:
+                    self.message = []
             else:
                 """
                     For map data, the format sent should be:
