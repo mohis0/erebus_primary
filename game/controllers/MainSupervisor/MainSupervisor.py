@@ -497,6 +497,9 @@ class Erebus(Supervisor):
         # Get estimated position and type values
         est_vic_pos = robot_message[0]
         est_vic_type = robot_message[1]
+        type_only_report: bool = est_vic_pos is None
+        if type_only_report:
+            est_vic_pos = self.robot_obj.position
 
         iterator: Sequence[VictimObject] = self.victim_manager.victims
         name: str = 'Battery'
@@ -509,13 +512,20 @@ class Erebus(Supervisor):
             is_battery_detection = False
 
         # Get nearby victim/hazards that are within range (as per the rules)
-        nearby_map_issues: Sequence[VictimObject] = [
-            h for h in iterator
-            if h.check_position(self.robot_obj.position) and
-            h.check_position(est_vic_pos) and
-            h.on_same_side(self.robot_obj) and
-            not h.identified
-        ]
+        if type_only_report:
+            nearby_map_issues: Sequence[VictimObject] = [
+                h for h in iterator
+                if h.check_position(self.robot_obj.position) and
+                not h.identified
+            ]
+        else:
+            nearby_map_issues = [
+                h for h in iterator
+                if h.check_position(self.robot_obj.position) and
+                h.check_position(est_vic_pos) and
+                h.on_same_side(self.robot_obj) and
+                not h.identified
+            ]
 
         Console.log_debug(f"--- Victim Data ---")
         for h in iterator:
