@@ -15,4 +15,4 @@ game/worlds/.*.wbproj
 
 game/protos/custom_robot.proto
 
-# game/controllers/robot0Controller/robot0Controller.py
+game/controllers/robot0Controller/robot0Controller.py
