@@ -238,7 +238,7 @@ class Erebus(Supervisor):
         self._last_real_time = time.time()
 
     def relocate_robot(self, manual = False) -> None:
-        """Relocate robot to last visited checkpoint
+        """ Relocate robot to last visited checkpoint
 
         Args:
             manual (bool, optional): Whether the robot relocate is manual (from
@@ -599,9 +599,12 @@ class Erebus(Supervisor):
                         Erebus.BATTERY_MISIDENTIFICATION_PENALTY,
                         multiplier=1,
                     )
+                    # TODO
+                    return
 
                 self.robot_obj.victim_identified = True
                 nearby_issue.identified = True
+                
                 return
 
             if est_vic_type.lower() == nearby_issue.simple_victim_type.lower():
