@@ -1,4 +1,4 @@
-import RobotWindow from 'https://cyberbotics.com/wwi/R2023a/RobotWindow.js';
+import RobotWindow from './js/RobotWindow.js';
 
 let historyHtml = "";
 let lopRemaining = 0;
